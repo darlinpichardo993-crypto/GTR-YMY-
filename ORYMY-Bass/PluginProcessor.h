@@ -39,6 +39,6 @@ private:
     int pitchSamples = 0;
     int pitchAnalysisCountdown = 0;
     void updateAudioPitch(const juce::AudioBuffer<float>& buffer);
-    float gateEnvelope = 0.0f;
+    std::array<float,2> gateEnvelope {{0.0f,0.0f}};
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ORYMYBassAudioProcessor)
 };
