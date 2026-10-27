@@ -32,7 +32,7 @@ void ORYMYBassAudioProcessor::prepareToPlay(double sampleRate,int samplesPerBloc
     spec={sampleRate,(juce::uint32)samplesPerBlock,(juce::uint32)getTotalNumOutputChannels()};
     for(auto& band:eqFilters) for(auto& f:band) { f->reset(); f->prepare(spec); }
     for(auto& band:toneFilters) for(auto& f:band) { f->reset(); f->prepare(spec); }
-    compressor.prepare(spec); compressor.reset(); gateEnvelope.fill(0.0f);
+    compressor.prepare(spec); compressor.reset(); gateEnvelope.fill(0.0f); filterCoefficientsInitialised=false;
     pitchHistory.fill(0.0f); pitchWriteIndex=0; pitchSamples=0; pitchAnalysisCountdown=0; detectedAudioNote.store(-1);
 }
 void ORYMYBassAudioProcessor::updateAudioPitch(const juce::AudioBuffer<float>& buffer) {
@@ -67,13 +67,37 @@ void ORYMYBassAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce
     compressor.setRatio(1.0f+comp*0.65f);
     compressor.setAttack(value(parameters,"attack"));
     compressor.setRelease(100.0f);
+    // Rebuild IIR coefficients only when a control changes. Allocating new coefficient
+    // objects on every audio block can cause real-time glitches and host instability.
     for(size_t i=0;i<eqHz.size();++i) {
-        auto c=juce::dsp::IIR::Coefficients<float>::makePeakFilter(spec.sampleRate,eqHz[i],1.0f,juce::Decibels::decibelsToGain(value(parameters,"eq"+juce::String((int)i))));
-        for(auto& f:eqFilters[i]) f->coefficients=c;
+        const float gainDb=value(parameters,"eq"+juce::String((int)i));
+        if(!filterCoefficientsInitialised || std::abs(gainDb-lastEqValues[i])>0.001f) {
+            auto c=juce::dsp::IIR::Coefficients<float>::makePeakFilter(spec.sampleRate,eqHz[i],1.0f,juce::Decibels::decibelsToGain(gainDb));
+            for(auto& f:eqFilters[i]) f->coefficients=c;
+            lastEqValues[i]=gainDb;
+        }
     }
-    auto bass=juce::dsp::IIR::Coefficients<float>::makeLowShelf(spec.sampleRate,120.0,0.707f,juce::Decibels::decibelsToGain((value(parameters,"bass")-5.0f)*1.25f));
-    auto mid=juce::dsp::IIR::Coefficients<float>::makePeakFilter(spec.sampleRate,700.0,0.8f,juce::Decibels::decibelsToGain((value(parameters,"mid")-5.0f)*1.2f));
-    auto treble=juce::dsp::IIR::Coefficients<float>::makeHighShelf(spec.sampleRate,4200.0,0.707f,juce::Decibels::decibelsToGain((value(parameters,"treble")-5.0f)*1.1f+(value(parameters,"presence")-5.0f)*0.6f));
+    const float bassControl=value(parameters,"bass");
+    const float midControl=value(parameters,"mid");
+    const float trebleControl=value(parameters,"treble");
+    const float presenceControl=value(parameters,"presence");
+    const std::array<float,3> toneValues {{bassControl,midControl,trebleControl+presenceControl}};
+    if(!filterCoefficientsInitialised || std::abs(toneValues[0]-lastToneValues[0])>0.001f) {
+        auto c=juce::dsp::IIR::Coefficients<float>::makeLowShelf(spec.sampleRate,120.0,0.707f,juce::Decibels::decibelsToGain((bassControl-5.0f)*1.25f));
+        for(auto& f:toneFilters[0]) f->coefficients=c;
+        lastToneValues[0]=toneValues[0];
+    }
+    if(!filterCoefficientsInitialised || std::abs(toneValues[1]-lastToneValues[1])>0.001f) {
+        auto c=juce::dsp::IIR::Coefficients<float>::makePeakFilter(spec.sampleRate,700.0,0.8f,juce::Decibels::decibelsToGain((midControl-5.0f)*1.2f));
+        for(auto& f:toneFilters[1]) f->coefficients=c;
+        lastToneValues[1]=toneValues[1];
+    }
+    if(!filterCoefficientsInitialised || std::abs(toneValues[2]-lastToneValues[2])>0.001f) {
+        auto c=juce::dsp::IIR::Coefficients<float>::makeHighShelf(spec.sampleRate,4200.0,0.707f,juce::Decibels::decibelsToGain((trebleControl-5.0f)*1.1f+(presenceControl-5.0f)*0.6f));
+        for(auto& f:toneFilters[2]) f->coefficients=c;
+        lastToneValues[2]=toneValues[2];
+    }
+    filterCoefficientsInitialised=true;
     for(int ch=0;ch<buffer.getNumChannels();++ch) {
         auto& channelGateEnvelope=gateEnvelope[(size_t)juce::jmin(ch,1)];
         auto* data=buffer.getWritePointer(ch);
@@ -86,9 +110,9 @@ void ORYMYBassAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce
         juce::dsp::AudioBlock<float> block(buffer);
         juce::dsp::ProcessContextReplacing<float> context(block.getSingleChannelBlock((size_t)ch));
         for(size_t i=0;i<eqHz.size();++i) eqFilters[i][(size_t)ch]->process(context);
-        toneFilters[0][(size_t)ch]->coefficients=bass; toneFilters[0][(size_t)ch]->process(context);
-        toneFilters[1][(size_t)ch]->coefficients=mid; toneFilters[1][(size_t)ch]->process(context);
-        toneFilters[2][(size_t)ch]->coefficients=treble; toneFilters[2][(size_t)ch]->process(context);
+        toneFilters[0][(size_t)ch]->process(context);
+        toneFilters[1][(size_t)ch]->process(context);
+        toneFilters[2][(size_t)ch]->process(context);
     }
     juce::dsp::AudioBlock<float> whole(buffer);
     compressor.process(juce::dsp::ProcessContextReplacing<float>(whole));
