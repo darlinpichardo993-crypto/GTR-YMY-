@@ -71,6 +71,8 @@ jobs:
           $small.Save("$PWD/ORYMY-Bass/assets/wizard-small-premium.bmp",[System.Drawing.Imaging.ImageFormat]::Bmp)
           $sg.Dispose(); $small.Dispose(); $sp.Dispose()
           if (!(Test-Path "ORYMY-Bass/assets/orymy-eye.ico")) { throw "Installer icon was not generated" }
+          if (!(Test-Path "ORYMY-Bass/assets/wizard-premium.bmp")) { throw "Premium installer artwork was not generated" }
+          if (!(Test-Path "ORYMY-Bass/assets/wizard-small-premium.bmp")) { throw "Premium small installer artwork was not generated" }
       - name: Configure
         run: cmake -S ORYMY-Bass -B ORYMY-Bass/build -A x64
       - name: Build VST3 and Standalone
