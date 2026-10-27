@@ -32,7 +32,7 @@ void ORYMYBassAudioProcessor::prepareToPlay(double sampleRate,int samplesPerBloc
     spec={sampleRate,(juce::uint32)samplesPerBlock,(juce::uint32)getTotalNumOutputChannels()};
     for(auto& band:eqFilters) for(auto& f:band) { f->reset(); f->prepare(spec); }
     for(auto& band:toneFilters) for(auto& f:band) { f->reset(); f->prepare(spec); }
-    compressor.prepare(spec); compressor.reset(); gateEnvelope=0.0f;
+    compressor.prepare(spec); compressor.reset(); gateEnvelope.fill(0.0f);
     pitchHistory.fill(0.0f); pitchWriteIndex=0; pitchSamples=0; pitchAnalysisCountdown=0; detectedAudioNote.store(-1);
 }
 void ORYMYBassAudioProcessor::updateAudioPitch(const juce::AudioBuffer<float>& buffer) {
@@ -75,7 +75,7 @@ void ORYMYBassAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce
     auto mid=juce::dsp::IIR::Coefficients<float>::makePeakFilter(spec.sampleRate,700.0,0.8f,juce::Decibels::decibelsToGain((value(parameters,"mid")-5.0f)*1.2f));
     auto treble=juce::dsp::IIR::Coefficients<float>::makeHighShelf(spec.sampleRate,4200.0,0.707f,juce::Decibels::decibelsToGain((value(parameters,"treble")-5.0f)*1.1f+(value(parameters,"presence")-5.0f)*0.6f));
     for(int ch=0;ch<buffer.getNumChannels();++ch) {
-        float channelGateEnvelope=0.0f;
+        auto& channelGateEnvelope=gateEnvelope[(size_t)juce::jmin(ch,1)];
         auto* data=buffer.getWritePointer(ch);
         for(int n=0;n<buffer.getNumSamples();++n) {
             const float x=data[n];
