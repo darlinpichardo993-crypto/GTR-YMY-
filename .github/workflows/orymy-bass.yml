@@ -1,0 +1,71 @@
+name: Build ORYMY Bass
+on:
+  push:
+    paths:
+      - 'ORYMY-Bass/**'
+      - '.github/workflows/orymy-bass.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create installer artwork and icon
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force ORYMY-Bass/assets | Out-Null
+          Add-Type -AssemblyName System.Drawing
+          $bmp = New-Object System.Drawing.Bitmap 256,256
+          $g = [System.Drawing.Graphics]::FromImage($bmp)
+          $g.Clear([System.Drawing.Color]::FromArgb(247,247,244))
+          $pen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(23,25,27),12)
+          $g.DrawEllipse($pen,30,30,196,196)
+          $g.DrawEllipse($pen,70,80,116,76)
+          $g.FillEllipse([System.Drawing.Brushes]::Black,110,95,38,48)
+          $g.DrawLine($pen,60,205,196,205)
+          $bmp.Save("$PWD/ORYMY-Bass/assets/icon.png",[System.Drawing.Imaging.ImageFormat]::Png)
+          $bmp.Dispose(); $g.Dispose(); $pen.Dispose()
+          $ico = New-Object System.IO.FileStream("$PWD/ORYMY-Bass/assets/orymy-eye.ico",[System.IO.FileMode]::Create)
+          $writer = New-Object System.IO.BinaryWriter($ico)
+          $writer.Write([UInt16]0); $writer.Write([UInt16]1); $writer.Write([UInt16]1)
+          $writer.Write([Byte]0); $writer.Write([Byte]0); $writer.Write([Byte]0); $writer.Write([Byte]0)
+          $writer.Write([UInt16]1); $writer.Write([UInt16]32); $writer.Write([UInt32]($bmp.Width*$bmp.Height*4+40)); $writer.Write([UInt32]22)
+          $writer.Dispose(); $ico.Dispose()
+          # Use ImageMagick available on hosted Windows to make a real multi-size ICO.
+          choco install imagemagick --no-progress -y
+          magick "$PWD/ORYMY-Bass/assets/icon.png" -define icon:auto-resize=256,128,64,48,32,16 "$PWD/ORYMY-Bass/assets/orymy-eye.ico"
+          $wizard = New-Object System.Drawing.Bitmap 164,314
+          $wg = [System.Drawing.Graphics]::FromImage($wizard); $wg.Clear([System.Drawing.Color]::FromArgb(241,230,194))
+          $f = New-Object System.Drawing.Font("Arial",18,[System.Drawing.FontStyle]::Bold)
+          $wg.DrawString("ORYMY BASS",$f,[System.Drawing.Brushes]::Black,14,28)
+          $wg.DrawString("YMY SOUNDS",$f,[System.Drawing.Brushes]::Black,14,58)
+          $wizard.Save("$PWD/ORYMY-Bass/assets/wizard.bmp",[System.Drawing.Imaging.ImageFormat]::Bmp)
+          $wg.Dispose(); $wizard.Dispose(); $f.Dispose()
+          $small = New-Object System.Drawing.Bitmap 55,55
+          $sg = [System.Drawing.Graphics]::FromImage($small); $sg.Clear([System.Drawing.Color]::FromArgb(241,230,194))
+          $sg.DrawEllipse([System.Drawing.Pens]::Black,6,6,43,43)
+          $small.Save("$PWD/ORYMY-Bass/assets/wizard-small.bmp",[System.Drawing.Imaging.ImageFormat]::Bmp)
+          $sg.Dispose(); $small.Dispose()
+          Copy-Item ORYMY-Bass/assets/wizard.bmp ORYMY-Bass/assets/wizard-yellow.bmp
+          Copy-Item ORYMY-Bass/assets/wizard-small.bmp ORYMY-Bass/assets/wizard-small-yellow.bmp
+      - name: Configure
+        run: cmake -S ORYMY-Bass -B ORYMY-Bass/build -A x64
+      - name: Build VST3 and Standalone
+        run: cmake --build ORYMY-Bass/build --config Release --parallel
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+      - name: Compile Setup.exe
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force ORYMY-Bass/build/installer/Output | Out-Null
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "ORYMY-Bass/ORYMY-Bass.iss"
+          if (!(Test-Path "ORYMY-Bass/build/installer/Output/ORYMY-Bass-Setup.exe")) { throw "Setup.exe not generated" }
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ORYMY-Bass-Setup
+          path: ORYMY-Bass/build/installer/Output/ORYMY-Bass-Setup.exe
+          if-no-files-found: error
