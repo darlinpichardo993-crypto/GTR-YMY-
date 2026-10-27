@@ -26,31 +26,29 @@ jobs:
           $g.DrawEllipse($pen,70,80,116,76)
           $g.FillEllipse([System.Drawing.Brushes]::Black,110,95,38,48)
           $g.DrawLine($pen,60,205,196,205)
-          $bmp.Save("$PWD/ORYMY-Bass/assets/icon.png",[System.Drawing.Imaging.ImageFormat]::Png)
-          $bmp.Dispose(); $g.Dispose(); $pen.Dispose()
+          $pngStream = New-Object System.IO.MemoryStream
+          $bmp.Save($pngStream,[System.Drawing.Imaging.ImageFormat]::Png)
+          [System.IO.File]::WriteAllBytes("$PWD/ORYMY-Bass/assets/icon.png",$pngStream.ToArray())
+          $pngBytes = $pngStream.ToArray()
+          $pngStream.Dispose(); $bmp.Dispose(); $g.Dispose(); $pen.Dispose()
           $ico = New-Object System.IO.FileStream("$PWD/ORYMY-Bass/assets/orymy-eye.ico",[System.IO.FileMode]::Create)
           $writer = New-Object System.IO.BinaryWriter($ico)
           $writer.Write([UInt16]0); $writer.Write([UInt16]1); $writer.Write([UInt16]1)
           $writer.Write([Byte]0); $writer.Write([Byte]0); $writer.Write([Byte]0); $writer.Write([Byte]0)
-          $writer.Write([UInt16]1); $writer.Write([UInt16]32); $writer.Write([UInt32]($bmp.Width*$bmp.Height*4+40)); $writer.Write([UInt32]22)
-          $writer.Dispose(); $ico.Dispose()
-          # Use ImageMagick available on hosted Windows to make a real multi-size ICO.
-          choco install imagemagick --no-progress -y
-          magick "$PWD/ORYMY-Bass/assets/icon.png" -define icon:auto-resize=256,128,64,48,32,16 "$PWD/ORYMY-Bass/assets/orymy-eye.ico"
+          $writer.Write([UInt16]1); $writer.Write([UInt16]32); $writer.Write([UInt32]$pngBytes.Length); $writer.Write([UInt32]22)
+          $writer.Write($pngBytes); $writer.Dispose(); $ico.Dispose()
           $wizard = New-Object System.Drawing.Bitmap 164,314
           $wg = [System.Drawing.Graphics]::FromImage($wizard); $wg.Clear([System.Drawing.Color]::FromArgb(241,230,194))
           $f = New-Object System.Drawing.Font("Arial",18,[System.Drawing.FontStyle]::Bold)
           $wg.DrawString("ORYMY BASS",$f,[System.Drawing.Brushes]::Black,14,28)
           $wg.DrawString("YMY SOUNDS",$f,[System.Drawing.Brushes]::Black,14,58)
-          $wizard.Save("$PWD/ORYMY-Bass/assets/wizard.bmp",[System.Drawing.Imaging.ImageFormat]::Bmp)
+          $wizard.Save("$PWD/ORYMY-Bass/assets/wizard-yellow.bmp",[System.Drawing.Imaging.ImageFormat]::Bmp)
           $wg.Dispose(); $wizard.Dispose(); $f.Dispose()
           $small = New-Object System.Drawing.Bitmap 55,55
           $sg = [System.Drawing.Graphics]::FromImage($small); $sg.Clear([System.Drawing.Color]::FromArgb(241,230,194))
           $sg.DrawEllipse([System.Drawing.Pens]::Black,6,6,43,43)
-          $small.Save("$PWD/ORYMY-Bass/assets/wizard-small.bmp",[System.Drawing.Imaging.ImageFormat]::Bmp)
+          $small.Save("$PWD/ORYMY-Bass/assets/wizard-small-yellow.bmp",[System.Drawing.Imaging.ImageFormat]::Bmp)
           $sg.Dispose(); $small.Dispose()
-          Copy-Item ORYMY-Bass/assets/wizard.bmp ORYMY-Bass/assets/wizard-yellow.bmp
-          Copy-Item ORYMY-Bass/assets/wizard-small.bmp ORYMY-Bass/assets/wizard-small-yellow.bmp
       - name: Configure
         run: cmake -S ORYMY-Bass -B ORYMY-Bass/build -A x64
       - name: Build VST3 and Standalone
@@ -59,10 +57,11 @@ jobs:
         run: choco install innosetup --no-progress -y
       - name: Compile Setup.exe
         shell: pwsh
+        working-directory: ORYMY-Bass
         run: |
-          New-Item -ItemType Directory -Force ORYMY-Bass/build/installer/Output | Out-Null
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "ORYMY-Bass/ORYMY-Bass.iss"
-          if (!(Test-Path "ORYMY-Bass/build/installer/Output/ORYMY-Bass-Setup.exe")) { throw "Setup.exe not generated" }
+          New-Item -ItemType Directory -Force build/installer/Output | Out-Null
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "ORYMY-Bass.iss"
+          if (!(Test-Path "build/installer/Output/ORYMY-Bass-Setup.exe")) { throw "Setup.exe not generated" }
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
