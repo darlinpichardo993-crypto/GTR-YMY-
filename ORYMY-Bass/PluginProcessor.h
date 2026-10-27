@@ -25,7 +25,7 @@ public:
     void getStateInformation(juce::MemoryBlock&) override;
     void setStateInformation(const void*, int) override;
     juce::AudioProcessorValueTreeState parameters;
-    int getCurrentMidiNote() const { return currentMidiNote.load(); }
+    int getCurrentMidiNote() const { const int midi=currentMidiNote.load(); return midi >= 0 ? midi : detectedAudioNote.load(); }
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 private:
     std::array<std::array<std::unique_ptr<juce::dsp::IIR::Filter<float>>,2>,10> eqFilters;
@@ -33,6 +33,12 @@ private:
     juce::dsp::Compressor<float> compressor;
     juce::dsp::ProcessSpec spec {};
     std::atomic<int> currentMidiNote {-1};
+    std::atomic<int> detectedAudioNote {-1};
+    std::array<float,4096> pitchHistory {};
+    int pitchWriteIndex = 0;
+    int pitchSamples = 0;
+    int pitchAnalysisCountdown = 0;
+    void updateAudioPitch(const juce::AudioBuffer<float>& buffer);
     float gateEnvelope = 0.0f;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ORYMYBassAudioProcessor)
 };
