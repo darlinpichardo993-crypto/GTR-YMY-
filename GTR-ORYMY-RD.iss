@@ -25,10 +25,11 @@ UninstallDisplayIcon={app}\GTR ORYMY RD.exe
 [Files]
 Source: "build\GtrOrymyRd_artefacts\Release\VST3\GTR ORYMY RD.vst3\*"; DestDir: "{commoncf}\VST3\GTR ORYMY RD.vst3"; Flags: recursesubdirs ignoreversion
 Source: "build\GtrOrymyRd_artefacts\Release\Standalone\GTR ORYMY RD.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "assets\gtr-eye.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\GTR ORYMY RD"; Filename: "{app}\GTR ORYMY RD.exe"; IconFilename: "{app}\GTR ORYMY RD.exe"
-Name: "{autodesktop}\GTR ORYMY RD"; Filename: "{app}\GTR ORYMY RD.exe"; IconFilename: "{app}\GTR ORYMY RD.exe"
+Name: "{group}\GTR ORYMY RD"; Filename: "{app}\GTR ORYMY RD.exe"; IconFilename: "{app}\gtr-eye.ico"
+Name: "{autodesktop}\GTR ORYMY RD"; Filename: "{app}\GTR ORYMY RD.exe"; IconFilename: "{app}\gtr-eye.ico"
 
 [Run]
 Filename: "{app}\GTR ORYMY RD.exe"; Description: "Abrir GTR ORYMY RD"; Flags: nowait postinstall skipifsilent unchecked
