@@ -5,7 +5,7 @@
 AppId={{A21D6A34-8A9C-4B7A-BA55-0A0B00000001}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-UninstallDisplayName=ORYMY Bass by YMY Sounds
+
 AppPublisher={#MyPublisher}
 AppComments=Professional Dominican bass tone suite by YMY Sounds
 AppContact=https://github.com/darlinpichardo993-crypto/GTR-YMY-
