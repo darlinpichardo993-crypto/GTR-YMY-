@@ -1,4 +1,4 @@
-# GTR ORYMY RD  -  Fluye
+# GTR ORYMY
 Made By ORYMY | YMY Records Song
 
 Pedal de guitarra de bachata en formato VST3 (y aplicacion independiente) para FL Studio.
