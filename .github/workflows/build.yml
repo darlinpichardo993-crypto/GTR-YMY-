@@ -1,0 +1,79 @@
+name: Build GTR ORYMY RD (Windows)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate eye icon and yellow installer artwork
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force assets | Out-Null
+          Add-Type -AssemblyName System.Drawing
+          function Draw-Eye($bmp, $small = $false) {
+            $g = [System.Drawing.Graphics]::FromImage($bmp)
+            $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+            $g.Clear([System.Drawing.Color]::FromArgb(255, 255, 205, 0))
+            $w = $bmp.Width; $h = $bmp.Height
+            $pen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(255, 25, 25, 25), [Math]::Max(2, [int]($w * 0.055)))
+            $white = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
+            $black = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(255, 20, 20, 20))
+            $iris = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(255, 20, 95, 60))
+            $rect = New-Object System.Drawing.RectangleF(($w * 0.12), ($h * 0.28), ($w * 0.76), ($h * 0.44))
+            $g.DrawArc($pen, $rect, 180, 180)
+            $g.DrawArc($pen, $rect, 0, 180)
+            $g.FillEllipse($white, ($w * 0.34), ($h * 0.30), ($w * 0.32), ($h * 0.40))
+            $g.FillEllipse($iris, ($w * 0.41), ($h * 0.35), ($w * 0.18), ($h * 0.30))
+            $g.FillEllipse($black, ($w * 0.455), ($h * 0.40), ($w * 0.09), ($h * 0.20))
+            $g.Dispose(); $pen.Dispose(); $white.Dispose(); $black.Dispose(); $iris.Dispose()
+          }
+          $bmp = New-Object System.Drawing.Bitmap(256,256)
+          Draw-Eye $bmp
+          $hicon = $bmp.GetHicon()
+          $icon = [System.Drawing.Icon]::FromHandle($hicon)
+          $fs = [System.IO.File]::Open((Join-Path (Get-Location) 'assets\gtr-eye.ico'), [System.IO.FileMode]::Create)
+          $icon.Save($fs); $fs.Close()
+          $icon.Dispose(); $bmp.Dispose()
+          $wizard = New-Object System.Drawing.Bitmap(164,314)
+          Draw-Eye $wizard
+          $wizard.Save((Join-Path (Get-Location) 'assets\wizard-yellow.bmp'), [System.Drawing.Imaging.ImageFormat]::Bmp)
+          $wizard.Dispose()
+          $small = New-Object System.Drawing.Bitmap(55,55)
+          Draw-Eye $small
+          $small.Save((Join-Path (Get-Location) 'assets\wizard-small-yellow.bmp'), [System.Drawing.Imaging.ImageFormat]::Bmp)
+          $small.Dispose()
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build VST3 and Standalone
+        run: cmake --build build --config Release --parallel 2
+
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+
+      - name: Create Setup.exe
+        shell: powershell
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "GTR-ORYMY-RD.iss"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (!(Test-Path "build\installer\Output\GTR-ORYMY-RD-Setup.exe")) {
+            throw "Setup.exe was not generated."
+          }
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: GTR-ORYMY-RD-Setup
+          path: build/installer/Output/GTR-ORYMY-RD-Setup.exe
+          if-no-files-found: error
