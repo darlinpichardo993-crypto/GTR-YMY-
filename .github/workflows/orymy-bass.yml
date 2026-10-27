@@ -20,17 +20,21 @@ jobs:
           Add-Type -AssemblyName System.Drawing
           $bmp = New-Object System.Drawing.Bitmap 256,256
           $g = [System.Drawing.Graphics]::FromImage($bmp)
-          $g.Clear([System.Drawing.Color]::FromArgb(247,247,244))
-          $pen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(23,25,27),12)
-          $g.DrawEllipse($pen,30,30,196,196)
-          $g.DrawEllipse($pen,70,80,116,76)
-          $g.FillEllipse([System.Drawing.Brushes]::Black,110,95,38,48)
-          $g.DrawLine($pen,60,205,196,205)
+          $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+          $g.Clear([System.Drawing.Color]::FromArgb(18,20,22))
+          $gold = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(201,171,108),9)
+          $white = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(245,242,233),5)
+          $g.DrawBezier($gold,28,128,72,62,184,62,228,128)
+          $g.DrawBezier($gold,28,128,72,194,184,194,228,128)
+          $g.DrawEllipse($white,86,86,84,84)
+          $g.FillEllipse([System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(201,171,108)),108,108,40,40)
+          $g.FillEllipse([System.Drawing.Brushes]::Black,120,115,17,26)
+          $g.DrawLine($gold,58,218,198,218)
           $pngStream = New-Object System.IO.MemoryStream
           $bmp.Save($pngStream,[System.Drawing.Imaging.ImageFormat]::Png)
           [System.IO.File]::WriteAllBytes("$PWD/ORYMY-Bass/assets/icon.png",$pngStream.ToArray())
           $pngBytes = $pngStream.ToArray()
-          $pngStream.Dispose(); $bmp.Dispose(); $g.Dispose(); $pen.Dispose()
+          $pngStream.Dispose(); $bmp.Dispose(); $g.Dispose(); $gold.Dispose(); $white.Dispose()
           $ico = New-Object System.IO.FileStream("$PWD/ORYMY-Bass/assets/orymy-eye.ico",[System.IO.FileMode]::Create)
           $writer = New-Object System.IO.BinaryWriter($ico)
           $writer.Write([UInt16]0); $writer.Write([UInt16]1); $writer.Write([UInt16]1)
@@ -38,17 +42,35 @@ jobs:
           $writer.Write([UInt16]1); $writer.Write([UInt16]32); $writer.Write([UInt32]$pngBytes.Length); $writer.Write([UInt32]22)
           $writer.Write($pngBytes); $writer.Dispose(); $ico.Dispose()
           $wizard = New-Object System.Drawing.Bitmap 164,314
-          $wg = [System.Drawing.Graphics]::FromImage($wizard); $wg.Clear([System.Drawing.Color]::FromArgb(241,230,194))
-          $f = New-Object System.Drawing.Font("Arial",18,[System.Drawing.FontStyle]::Bold)
-          $wg.DrawString("ORYMY BASS",$f,[System.Drawing.Brushes]::Black,14,28)
-          $wg.DrawString("YMY SOUNDS",$f,[System.Drawing.Brushes]::Black,14,58)
-          $wizard.Save("$PWD/ORYMY-Bass/assets/wizard-yellow.bmp",[System.Drawing.Imaging.ImageFormat]::Bmp)
-          $wg.Dispose(); $wizard.Dispose(); $f.Dispose()
+          $wg = [System.Drawing.Graphics]::FromImage($wizard)
+          $wg.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+          $wg.Clear([System.Drawing.Color]::FromArgb(18,20,22))
+          $goldBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(201,171,108))
+          $creamBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(245,242,233))
+          $goldPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(201,171,108),3)
+          $fontBig = New-Object System.Drawing.Font("Arial",16,[System.Drawing.FontStyle]::Bold)
+          $fontSmall = New-Object System.Drawing.Font("Arial",7,[System.Drawing.FontStyle]::Bold)
+          $wg.DrawBezier($goldPen,18,105,47,66,117,66,146,105)
+          $wg.DrawBezier($goldPen,18,105,47,144,117,144,146,105)
+          $wg.FillEllipse($goldBrush,62,84,40,40)
+          $wg.FillEllipse([System.Drawing.Brushes]::Black,74,89,17,28)
+          $wg.DrawString("ORYMY",$fontBig,$creamBrush,16,176)
+          $wg.DrawString("BASS",$fontBig,$goldBrush,16,198)
+          $wg.DrawLine($goldPen,16,234,146,234)
+          $wg.DrawString("YMY SOUNDS  /  TONE CRAFT",$fontSmall,$creamBrush,16,246)
+          $wizard.Save("$PWD/ORYMY-Bass/assets/wizard-premium.bmp",[System.Drawing.Imaging.ImageFormat]::Bmp)
+          $wg.Dispose(); $wizard.Dispose(); $goldBrush.Dispose(); $creamBrush.Dispose(); $goldPen.Dispose(); $fontBig.Dispose(); $fontSmall.Dispose()
           $small = New-Object System.Drawing.Bitmap 55,55
-          $sg = [System.Drawing.Graphics]::FromImage($small); $sg.Clear([System.Drawing.Color]::FromArgb(241,230,194))
-          $sg.DrawEllipse([System.Drawing.Pens]::Black,6,6,43,43)
-          $small.Save("$PWD/ORYMY-Bass/assets/wizard-small-yellow.bmp",[System.Drawing.Imaging.ImageFormat]::Bmp)
-          $sg.Dispose(); $small.Dispose()
+          $sg = [System.Drawing.Graphics]::FromImage($small)
+          $sg.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+          $sg.Clear([System.Drawing.Color]::FromArgb(18,20,22))
+          $sp = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(201,171,108),3)
+          $sg.DrawBezier($sp,4,27,15,8,40,8,51,27)
+          $sg.DrawBezier($sp,4,27,15,46,40,46,51,27)
+          $sg.FillEllipse([System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(201,171,108)),20,17,15,20)
+          $small.Save("$PWD/ORYMY-Bass/assets/wizard-small-premium.bmp",[System.Drawing.Imaging.ImageFormat]::Bmp)
+          $sg.Dispose(); $small.Dispose(); $sp.Dispose()
+          if (!(Test-Path "ORYMY-Bass/assets/orymy-eye.ico")) { throw "Installer icon was not generated" }
       - name: Configure
         run: cmake -S ORYMY-Bass -B ORYMY-Bass/build -A x64
       - name: Build VST3 and Standalone
@@ -62,6 +84,10 @@ jobs:
           New-Item -ItemType Directory -Force build/installer/Output | Out-Null
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "ORYMY-Bass.iss"
           if (!(Test-Path "build/installer/Output/ORYMY-Bass-Setup.exe")) { throw "Setup.exe not generated" }
+          $setup = Get-Item "build/installer/Output/ORYMY-Bass-Setup.exe"
+          if ($setup.Length -lt 1000000) { throw "Installer unexpectedly small; refusing to publish a broken installer" }
+          if (!(Test-Path "build/ORYMYBass_artefacts/Release/Standalone/ORYMY Bass.exe")) { throw "Standalone executable missing from build output" }
+          if (!(Test-Path "build/ORYMYBass_artefacts/Release/VST3/ORYMY Bass.vst3/Contents/x86_64-win/ORYMY Bass.vst3")) { throw "VST3 binary missing from build output" }
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
