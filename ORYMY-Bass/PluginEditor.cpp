@@ -53,7 +53,7 @@ ORYMYBassAudioProcessorEditor::ORYMYBassAudioProcessorEditor(ORYMYBassAudioProce
     scaleBox.addItem("E MINOR",4); scaleBox.addItem("G MAJOR",5); scaleBox.addItem("B MINOR",6);
     scaleBox.addItem("A MAJOR",7); scaleBox.addItem("F# MINOR",8); scaleBox.setSelectedId(1); addAndMakeVisible(scaleBox);
     scaleLabel.setText("SCALE GUIDE",juce::dontSendNotification); scaleLabel.setFont(juce::Font(juce::FontOptions(10.0f,juce::Font::bold))); scaleLabel.setColour(juce::Label::textColourId,grey); addAndMakeVisible(scaleLabel);
-    noteLabel.setText("MIDI NOTE  —   PLAY A NOTE",juce::dontSendNotification); noteLabel.setFont(juce::Font(juce::FontOptions(12.0f,juce::Font::bold))); noteLabel.setColour(juce::Label::textColourId,ink); addAndMakeVisible(noteLabel);
+    noteLabel.setText("NOTE MONITOR  —   PLAY BASS",juce::dontSendNotification); noteLabel.setFont(juce::Font(juce::FontOptions(12.0f,juce::Font::bold))); noteLabel.setColour(juce::Label::textColourId,ink); addAndMakeVisible(noteLabel);
     for(int i=0;i<10;++i) {
         setupKnob(knobs[(size_t)i],knobNames[(size_t)i]);
         addAndMakeVisible(knobLabels[(size_t)i]);
@@ -80,8 +80,8 @@ void ORYMYBassAudioProcessorEditor::setupKnob(juce::Slider& s,const juce::String
 void ORYMYBassAudioProcessorEditor::applySelectedPreset(){const int id=presetBox.getSelectedId();if(id>0)OrymyBass::applyPreset(audioProcessor.parameters,id-1);}
 void ORYMYBassAudioProcessorEditor::timerCallback() {
     const int n=audioProcessor.getCurrentMidiNote();
-    if(n<0) noteLabel.setText("MIDI NOTE  —   PLAY A NOTE",juce::dontSendNotification);
-    else noteLabel.setText("MIDI NOTE  /  "+juce::String(noteNames[(size_t)(n%12)])+juce::String(n/12-1)+"   •   "+scaleBox.getText(),juce::dontSendNotification);
+    if(n<0) noteLabel.setText("NOTE MONITOR  —   PLAY A NOTE",juce::dontSendNotification);
+    else noteLabel.setText("NOTE MONITOR  /  "+juce::String(noteNames[(size_t)(n%12)])+juce::String(n/12-1)+"   •   "+scaleBox.getText(),juce::dontSendNotification);
 }
 void ORYMYBassAudioProcessorEditor::paint(juce::Graphics& g) {
     g.fillAll(paper);
