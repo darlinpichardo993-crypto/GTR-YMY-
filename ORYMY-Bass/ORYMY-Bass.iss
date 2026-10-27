@@ -2,7 +2,7 @@
 #define MyAppVersion "1.0.0"
 #define MyPublisher "YMY Sounds"
 [Setup]
-AppId={{A21D6A34-8A9C-4B7A-BASS-ORYMY000001}
+AppId={{A21D6A34-8A9C-4B7A-BA55-0A0B00000001}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyPublisher}
