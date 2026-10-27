@@ -31,14 +31,14 @@ public:
         g.setColour(accent); g.fillEllipse(r.getCentreX()-2.5f,r.getCentreY()-2.5f,5,5);
     }
 };
-BassLook look;
 void text(juce::Graphics& g,juce::String s,juce::Rectangle<int> r,float size,juce::Colour c=ink,bool bold=false,juce::Justification j=juce::Justification::centredLeft) {
     g.setColour(c); g.setFont(juce::Font(juce::FontOptions(size, bold?juce::Font::bold:juce::Font::plain))); g.drawText(s,r,j,false);
 }
 }
 ORYMYBassAudioProcessorEditor::ORYMYBassAudioProcessorEditor(ORYMYBassAudioProcessor& p)
 : AudioProcessorEditor(&p), audioProcessor(p) {
-    setLookAndFeel(&look);
+    ownedLookAndFeel = std::make_unique<BassLook>();
+    setLookAndFeel(ownedLookAndFeel.get());
     setSize(1120,760);
     brandLabel.setText("ORYMY BASS",juce::dontSendNotification);
     brandLabel.setFont(juce::Font(juce::FontOptions(27.0f,juce::Font::bold)));
@@ -71,7 +71,7 @@ ORYMYBassAudioProcessorEditor::ORYMYBassAudioProcessorEditor(ORYMYBassAudioProce
     startTimerHz(12);
     OrymyBass::applyPreset(audioProcessor.parameters,0);
 }
-ORYMYBassAudioProcessorEditor::~ORYMYBassAudioProcessorEditor(){stopTimer();setLookAndFeel(nullptr);}
+ORYMYBassAudioProcessorEditor::~ORYMYBassAudioProcessorEditor(){stopTimer();setLookAndFeel(nullptr);ownedLookAndFeel.reset();}
 void ORYMYBassAudioProcessorEditor::setupKnob(juce::Slider& s,const juce::String& label) {
     s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,56,16);
