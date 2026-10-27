@@ -1,11 +1,17 @@
 #define MyAppName "ORYMY Bass"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyPublisher "YMY Sounds"
 [Setup]
 AppId={{A21D6A34-8A9C-4B7A-BA55-0A0B00000001}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyPublisher}
+AppComments=Professional Dominican bass tone suite by YMY Sounds
+AppContact=https://github.com/darlinpichardo993-crypto/GTR-YMY-
+VersionInfoVersion=1.0.1.0
+VersionInfoCompany={#MyPublisher}
+VersionInfoDescription=ORYMY Bass Installer
+VersionInfoProductName=ORYMY Bass
 DefaultDirName={autopf}\YMY Sounds\ORYMY Bass
 DefaultGroupName=YMY Sounds\ORYMY Bass
 OutputDir=build\installer\Output
@@ -28,7 +34,5 @@ Source: "assets\orymy-eye.ico"; DestDir: "{app}"; Flags: ignoreversion
 [Icons]
 Name: "{autoprograms}\ORYMY Bass"; Filename: "{app}\ORYMY Bass.exe"; IconFilename: "{app}\orymy-eye.ico"
 Name: "{autodesktop}\ORYMY Bass"; Filename: "{app}\ORYMY Bass.exe"; IconFilename: "{app}\orymy-eye.ico"; Tasks: desktopicon
-[Tasks]
-Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"
 [Run]
 Filename: "{app}\ORYMY Bass.exe"; Description: "Launch ORYMY Bass"; Flags: postinstall nowait skipifsilent
