@@ -1,27 +1,25 @@
-# GTR ORYMY
-Made By ORYMY | YMY Records Song
+# GTR ORYMY RD
 
-Pedal de guitarra de bachata en formato VST3 (y aplicacion independiente) para FL Studio.
+Pedal de guitarra de bachata en formato VST3 y aplicación Standalone para Windows.
 
-## Efectos (cadena: Entrada > Comp/Limiter > Wah > Tone Shaper > Chorus estereo > Reverb > Salida)
-- COMP/LIMITER: Compression, Level, Attack (SOFT / MID / HARD) + limitador de seguridad
-- WAH: pedal manual (automatizable en FL) o automatico por la fuerza del toque; resonancia
-- TONE SHAPER: Low, Mid, Hi, Enhance (aire/calidez) y Level
-- STEREO CHORUS: Speed, Width y Pre-Delay de 0 a 20 ms
-- DIGITAL REVERB: Mix 0-50 % y tipo HALL / STAGE / ROOM / PLATE
-- Master Input / Master Output, y 5 pedales de pie con LED para activar cada efecto
+## Compilar y descargar
 
-## Presets (13)
-Estilos de sonido inspirados en Raulin, Antony Santos, Romeo, Lenny y Myke Suenala,
-mas el preset base "GTR ORYMY - Fluye" y dos presets de wah.
+Cada push a `main` y cada ejecución manual compilan el proyecto con GitHub Actions.
 
-## Tonalidad y escala
-Mientras tocas, el plugin detecta la tonalidad (mayor/menor), la escala (con sus notas),
-la tonalidad relativa y la nota que suena, y los muestra en el panel y en el teclado.
-Boton RESET para empezar de nuevo. Funciona mejor con arpegios, acordes y requinto limpio.
+1. Abre la pestaña **Actions** del repositorio.
+2. Selecciona **Build GTR ORYMY RD (Windows)** y abre la ejecución más reciente.
+3. Espera a que termine correctamente.
+4. En **Artifacts**, descarga `GTR-ORYMY-RD-Setup`.
+5. Descomprime el ZIP descargado y ejecuta `GTR-ORYMY-RD-Setup.exe`.
 
-## Obtener el instalador
-1. Sube todo este contenido a un repositorio nuevo de GitHub.
-2. Pestana Actions > "Build GTR ORYMY RD (Windows)".
-3. Descarga el artefacto GTR-ORYMY-RD-Setup > GTR-ORYMY-RD-Setup.exe y ejecutalo (FL Studio cerrado).
-4. En FL Studio: Options > Manage plugins > Find installed plugins.
+El instalador incluye el plugin VST3 y la aplicación independiente. Usa una identidad de instalación propia y no necesita sobrescribir otro plugin. Cierra FL Studio antes de instalar y vuelve a escanear los plugins desde **Options → Manage plugins → Find installed plugins**.
+
+## Efectos
+
+- Compresor/limitador, wah, tone shaper, chorus estéreo y reverb.
+- Controles Master Input y Master Output.
+- 13 presets y detector de tonalidad/escala.
+
+## Compilación local
+
+Requiere CMake 3.22+, Visual Studio 2022 C++ build tools y acceso a Internet para descargar JUCE 8.0.4.
