@@ -15,6 +15,7 @@ private:
     void setupKnob(juce::Slider&, const juce::String&);
     void applySelectedPreset();
     ORYMYBassAudioProcessor& audioProcessor;
+    std::unique_ptr<juce::LookAndFeel_V4> ownedLookAndFeel;
     juce::ComboBox presetBox, scaleBox;
     juce::Label noteLabel, scaleLabel, brandLabel, subtitleLabel;
     std::array<juce::Slider,10> knobs;
