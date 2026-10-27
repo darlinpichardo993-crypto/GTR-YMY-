@@ -33,6 +33,51 @@ void ORYMYBassAudioProcessor::prepareToPlay(double sampleRate,int samplesPerBloc
     for(auto& band:eqFilters) for(auto& f:band) { f->reset(); f->prepare(spec); }
     for(auto& band:toneFilters) for(auto& f:band) { f->reset(); f->prepare(spec); }
     compressor.prepare(spec); compressor.reset(); gateEnvelope=0.0f;
+    pitchHistory.fill(0.0f); pitchWriteIndex=0; pitchSamples=0; pitchAnalysisCountdown=0; detectedAudioNote.store(-1);
+}
+void ORYMYBassAudioProcessor::updateAudioPitch(const juce::AudioBuffer<float>& buffer) {
+    if (buffer.getNumChannels() < 1 || spec.sampleRate <= 0.0) return;
+    const auto* input = buffer.getReadPointer(0);
+    for (int i=0; i<buffer.getNumSamples(); ++i) {
+        pitchHistory[(size_t)pitchWriteIndex] = input[i];
+        pitchWriteIndex = (pitchWriteIndex + 1) % (int)pitchHistory.size();
+        pitchSamples = juce::jmin(pitchSamples + 1, (int)pitchHistory.size());
+    }
+    pitchAnalysisCountdown += buffer.getNumSamples();
+    if (pitchSamples < 2048 || pitchAnalysisCountdown < 4096) return;
+    pitchAnalysisCountdown = 0;
+    std::array<float,2048> window {};
+    double mean = 0.0;
+    for (int i=0; i<2048; ++i) {
+        const int index = (pitchWriteIndex - 2048 + i + (int)pitchHistory.size()) % (int)pitchHistory.size();
+        window[(size_t)i] = pitchHistory[(size_t)index]; mean += window[(size_t)i];
+    }
+    mean /= 2048.0;
+    double rms = 0.0;
+    for (auto& sample : window) { sample = (float)(sample - mean); rms += sample * sample; }
+    rms = std::sqrt(rms / 2048.0);
+    if (rms < 0.0008) { detectedAudioNote.store(-1); return; }
+    const int minLag = juce::jmax(50, (int)(spec.sampleRate / 500.0));
+    const int maxLag = juce::jmin(1500, (int)(spec.sampleRate / 28.0));
+    double bestCorrelation = 0.0; int bestLag = 0;
+    for (int lag=minLag; lag<=maxLag; ++lag) {
+        double cross=0.0, energyA=0.0, energyB=0.0;
+        for (int i=0; i<2048-lag; i+=2) {
+            const double a=window[(size_t)i], b=window[(size_t)(i+lag)];
+            cross += a*b; energyA += a*a; energyB += b*b;
+        }
+        const double denom=std::sqrt(energyA*energyB);
+        const double corr=denom>1.0e-12 ? cross/denom : 0.0;
+        if (corr > bestCorrelation) { bestCorrelation=corr; bestLag=lag; }
+    }
+    if (bestLag > 0 && bestCorrelation > 0.52) {
+        const double hz=spec.sampleRate/(double)bestLag;
+        if (hz >= 27.0 && hz <= 550.0) {
+            const int note=(int)std::lround(69.0 + 12.0*std::log2(hz/440.0));
+            detectedAudioNote.store(juce::jlimit(21, 96, note)); return;
+        }
+    }
+    detectedAudioNote.store(-1);
 }
 void ORYMYBassAudioProcessor::releaseResources() {}
 bool ORYMYBassAudioProcessor::isBusesLayoutSupported(const BusesLayout& l) const {
@@ -46,6 +91,7 @@ void ORYMYBassAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce
         if(m.isNoteOn()) currentMidiNote.store(m.getNoteNumber());
         else if(m.isNoteOff() && currentMidiNote.load()==m.getNoteNumber()) currentMidiNote.store(-1);
     }
+    updateAudioPitch(buffer);
     const float in=value(parameters,"input"), master=value(parameters,"master");
     const float drive=value(parameters,"drive")*0.8f;
     const float gateDb=value(parameters,"gate");
